@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"syscall"
@@ -14,6 +15,9 @@ var (
 	ProcessNotStopped  = fmt.Errorf("exec: not stopped")
 	ProcessNotExited   = fmt.Errorf("exec: not exited")
 	ProcessNotTrapped  = fmt.Errorf("exec: not trapped")
+	StdinSet           = fmt.Errorf("exec: stdin already set")
+	StdoutSet          = fmt.Errorf("exec: stdout already set")
+	StderrSet          = fmt.Errorf("exec: stderr already set")
 )
 
 type Cmd struct {
@@ -30,6 +34,25 @@ func Command(name string, arg ...string) *Cmd {
 		false,
 		exec.Command(name, arg...),
 	}
+}
+
+func (c *Cmd) Communicate(stdin string) (string, string, error) {
+	if c.Stdin != nil {
+		return "", "", StdinSet
+	}
+	if c.Stdout != nil {
+		return "", "", StdoutSet
+	}
+	if c.Stderr != nil {
+		return "", "", StderrSet
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	c.Stdin = bytes.NewBufferString(stdin)
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	err := c.Run()
+	return stdout.String(), stderr.String(), err
 }
 
 func (c *Cmd) Run() error {

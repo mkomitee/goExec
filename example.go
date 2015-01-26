@@ -212,4 +212,14 @@ func main() {
 
 		fmt.Println()
 	}
+	fmt.Println()
+	c := cmd.Command("ls")
+	o, e, err := c.Communicate("")
+	if err != nil {
+		log.Fatalf("Error in Communicate: %v", err)
+	}
+	log.Print("stdout: ", o)
+	log.Print("stderr: ", e)
+	report(c)
+
 }
